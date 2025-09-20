@@ -3,7 +3,9 @@ const express = require('express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const countryRoutes = require('./routes/countries');
-
+const clientesRoute = require('./routes/clientesRoute');
+const {version, name} = require('./package.json');
+const { testConnection } = require('./config/database');
 
 
 
@@ -41,20 +43,30 @@ const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 //Rutas
+
+//End point helth check
 app.get('/', (req, res) => {
-    
-    res.json(paisesAmerica);
-    //res.send('Hola Mundo desde Express - Saludos');
+  
+  res.status(200).json(
+    {status: 'ok',
+      service: name,
+      version: version,
+      timestamp: new Date().toISOString()
+    }
+  );
+  
 });
 
-app.use(countryRoutes); //Usar las rutas definidas en routes/countries.js
-
-
-
-
+app.use(countryRoutes);
+ //Usar las rutas definidas en routes/countries.js
+app.use(clientesRoute);
+ //Usar las rutas definidas en routes/clientesRoute.js
 
 //Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  console.log('Swagger en http://localhost:3000/api-docs');
+  console.log(`Swagger en http://localhost:${PORT}/api-docs`);
+
+
+  testConnection();
 });
