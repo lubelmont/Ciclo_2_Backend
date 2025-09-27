@@ -12,6 +12,8 @@ const clientesController = require('../controllers/clientesController');
  *     description: Retorna una lista paginada de clientes activos
  *     tags:
  *       - Clientes
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page

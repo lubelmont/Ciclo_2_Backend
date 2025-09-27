@@ -4,8 +4,13 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const countryRoutes = require('./routes/countries');
 const clientesRoute = require('./routes/clientesRoute');
+const authRoute = require('./routes/authRoute');
 const {version, name} = require('./package.json');
 const { testConnection } = require('./config/database');
+const { authenticateToken } = require('./middlewares/authMiddleware');
+const {  validateAppIdentifier, validateApiKey, } = require('./middlewares/apiKeyMiddleware');
+
+
 
 
 
@@ -15,6 +20,15 @@ const PORT = 3000;
 
 //Middlewares JSON
 app.use(express.json());
+
+// Middleware para debuggear todas las peticiones
+app.use((req, res, next) => {
+  console.log(`🔍 ${req.method} ${req.path} - Body:`, req.body);
+  next();
+});
+
+
+
 
 
 //Carga de documentación Swagger
@@ -30,6 +44,16 @@ const swaggerOptions = {
         email: "arnulfo@example.com"
       }
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT"
+        }
+      }
+    },
+    securuity: [{ bearerAuth: [] }],
     servers: [
       {
         url: "http://localhost:3000"
@@ -57,10 +81,22 @@ app.get('/', (req, res) => {
   
 });
 
+app.use(validateAppIdentifier, validateApiKey);
+
+//Usar las rutas definidas en routes/countries.js
 app.use(countryRoutes);
- //Usar las rutas definidas en routes/countries.js
-app.use(clientesRoute);
- //Usar las rutas definidas en routes/clientesRoute.js
+
+//Rutas de usuario (registro, login) - ESTAS DEBEN IR PRIMERO (SIN AUTENTICACIÓN)
+console.log('Registrando rutas de autenticación...');
+app.use(authRoute);
+
+//Usar las rutas definidas en routes/clientesRoute.js
+app.use(authenticateToken, clientesRoute);
+
+
+// Comentar esta línea que causa error
+// const password = 'mi_contraseña_segura';
+// console.log(bcrypt.hashSync(password, 10));
 
 //Iniciar servidor
 app.listen(PORT, () => {
